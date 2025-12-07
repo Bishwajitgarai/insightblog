@@ -21,5 +21,6 @@ dependencies = [
     "python-multipart",
     "pytest",
     "httpx",
-    "pytest-asyncio"
+    "pytest-asyncio",
+    "aioredis>=2.0.1",
 ]

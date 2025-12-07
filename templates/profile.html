@@ -3,75 +3,72 @@
 {% block title %}Profile - InsightBlog{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto mt-10">
-    <div id="loading" class="text-center py-10">
-        <p class="text-gray-500">Loading profile...</p>
+<div class="container container-sm" style="padding: 2rem 0;">
+    <!-- Loading -->
+    <div id="loading" class="text-center" style="padding: 4rem 0;">
+        <div class="skeleton skeleton-avatar" style="margin: 0 auto 1rem;"></div>
+        <div class="skeleton skeleton-title" style="margin: 0 auto 1rem;"></div>
+        <div class="skeleton skeleton-text" style="margin: 0 auto;"></div>
     </div>
 
-    <div id="profile-content" class="card hidden">
-        <h2 class="text-3xl font-bold mb-6 text-center neon-text">Your Profile</h2>
-        
-        <div class="flex flex-col items-center mb-8">
-            <div class="w-32 h-32 rounded-full overflow-hidden border-2 border-primary mb-4 relative group">
-                <img id="profileImage" src="https://via.placeholder.com/150" alt="Profile" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer" onclick="document.getElementById('avatarInput').click()">
-                    <span class="text-white text-sm">Change</span>
-                </div>
+    <!-- Profile Content -->
+    <div id="profile-content" class="card" style="display: none;">
+        <div class="text-center" style="margin-bottom: 2rem;">
+            <div style="width: 120px; height: 120px; margin: 0 auto 1rem; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary);">
+                <img id="profileImage" src="https://ui-avatars.com/api/?name=User&background=6366f1&color=fff&size=120" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
-            <input type="file" id="avatarInput" class="hidden" accept="image/*">
-            <h3 id="profile-name" class="text-xl font-semibold text-gray-200"></h3>
-            <p id="profile-email" class="text-gray-400"></p>
+            <h2 id="profile-name" style="margin-bottom: 0.5rem;"></h2>
+            <p id="profile-email" class="text-muted"></p>
         </div>
 
-        <form id="profileForm" class="space-y-6">
+        <form id="profileForm" class="flex flex-col gap-md">
             <div>
-                <label for="full_name" class="block text-sm font-medium text-gray-400">Full Name</label>
-                <div class="mt-1">
-                    <input id="full_name" name="full_name" type="text" class="w-full bg-input-bg border border-border-color text-gray-200 rounded p-3 focus:outline-none focus:border-primary">
-                </div>
+                <label for="full_name" class="text-sm font-semibold" style="display: block; margin-bottom: 0.5rem;">Full Name</label>
+                <input id="full_name" name="full_name" type="text" class="input">
             </div>
 
             <div>
-                <label for="bio" class="block text-sm font-medium text-gray-400">Bio</label>
-                <div class="mt-1">
-                    <textarea id="bio" name="bio" rows="3" class="w-full bg-input-bg border border-border-color text-gray-200 rounded p-3 focus:outline-none focus:border-primary"></textarea>
-                </div>
+                <label for="bio" class="text-sm font-semibold" style="display: block; margin-bottom: 0.5rem;">Bio</label>
+                <textarea id="bio" name="bio" rows="3" class="input" placeholder="Tell us about yourself"></textarea>
             </div>
 
             <div>
-                <button type="submit" class="w-full btn-neon flex justify-center">
-                    Update Profile
-                </button>
+                <label for="avatarInput" class="text-sm font-semibold" style="display: block; margin-bottom: 0.5rem;">Profile Picture</label>
+                <input type="file" id="avatarInput" accept="image/*" class="input">
             </div>
+
+            <button type="submit" class="btn btn-primary">
+                Update Profile
+            </button>
             
-            <div class="pt-4 border-t border-gray-800">
-                <button type="button" onclick="toggleChangePasswordModal()" class="w-full border border-primary text-primary hover:bg-primary hover:text-black font-bold py-2 px-4 rounded transition">
-                    Change Password
-                </button>
-            </div>
+            <button type="button" onclick="toggleChangePasswordModal()" class="btn btn-secondary">
+                Change Password
+            </button>
         </form>
     </div>
 
     <!-- Change Password Modal -->
-    <div id="changePasswordModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-card border border-primary p-8 rounded-lg w-full max-w-md relative shadow-[0_0_15px_rgba(0,255,204,0.3)]">
-            <button onclick="toggleChangePasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <h3 class="text-2xl font-bold mb-6 neon-text text-center">Change Password</h3>
-            <form id="changePasswordForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-1">Current Password</label>
-                    <input type="password" name="old_password" required class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded p-3 focus:outline-none focus:border-primary transition">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-1">New Password</label>
-                    <input type="password" name="new_password" required class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded p-3 focus:outline-none focus:border-primary transition">
-                </div>
-                <button type="submit" class="w-full btn-neon mt-4 flex justify-center py-3">Update Password</button>
-            </form>
+    <div id="changePasswordModal" class="modal-overlay" style="display: none;">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3 style="margin: 0;">Change Password</h3>
+            </div>
+            <div class="modal-body">
+                <form id="changePasswordForm" class="flex flex-col gap-md">
+                    <div>
+                        <label class="text-sm font-semibold" style="display: block; margin-bottom: 0.5rem;">Current Password</label>
+                        <input type="password" name="old_password" required class="input">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold" style="display: block; margin-bottom: 0.5rem;">New Password</label>
+                        <input type="password" name="new_password" required class="input" minlength="6">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="toggleChangePasswordModal()" class="btn btn-secondary">Cancel</button>
+                <button onclick="submitPasswordChange()" class="btn btn-primary">Update Password</button>
+            </div>
         </div>
     </div>
 </div>
@@ -89,10 +86,11 @@
             currentUser = await response.json();
             renderProfile(currentUser);
             
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('profile-content').classList.remove('hidden');
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('profile-content').style.display = 'block';
         } catch (error) {
-            document.getElementById('loading').innerHTML = '<p class="text-red-500">Error loading profile</p>';
+            console.error('Error loading profile:', error);
+            document.getElementById('loading').innerHTML = '<p class="text-error">Error loading profile</p>';
         }
     }
 
@@ -104,15 +102,21 @@
         
         if (user.profile_image_url) {
             document.getElementById('profileImage').src = user.profile_image_url;
+        } else {
+            document.getElementById('profileImage').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=6366f1&color=fff&size=120`;
         }
     }
 
     function toggleChangePasswordModal() {
         const modal = document.getElementById('changePasswordModal');
-        modal.classList.toggle('hidden');
-        modal.classList.toggle('flex');
+        if (modal.style.display === 'none') {
+            modal.style.display = 'flex';
+        } else {
+            modal.style.display = 'none';
+        }
     }
 
+    // Close modal on overlay click
     document.getElementById('changePasswordModal').addEventListener('click', (e) => {
         if (e.target === document.getElementById('changePasswordModal')) {
             toggleChangePasswordModal();
@@ -136,12 +140,10 @@
             if (response.ok) {
                 const data = await response.json();
                 document.getElementById('profileImage').src = data.profile_image_url;
-                alert('Avatar updated successfully!');
-            } else {
-                alert('Failed to upload avatar');
+                notificationService.showToast('Avatar updated successfully!', 'success');
             }
         } catch (error) {
-            alert('Error uploading avatar');
+            notificationService.showToast('Error uploading avatar', 'error');
         }
     });
 
@@ -162,20 +164,18 @@
             });
 
             if (response.ok) {
-                alert('Profile updated successfully!');
-                loadProfile(); // Reload profile
-            } else {
-                alert('Failed to update profile');
+                notificationService.showToast('Profile updated successfully!', 'success');
+                loadProfile();
             }
         } catch (error) {
-            alert('Error updating profile');
+            notificationService.showToast('Error updating profile', 'error');
         }
     });
 
     // Change Password
-    document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
+    async function submitPasswordChange() {
+        const form = document.getElementById('changePasswordForm');
+        const formData = new FormData(form);
         
         const data = {
             old_password: formData.get('old_password'),
@@ -190,17 +190,17 @@
             });
 
             if (response.ok) {
-                alert('Password changed successfully!');
+                notificationService.showToast('Password changed successfully!', 'success');
                 toggleChangePasswordModal();
-                e.target.reset();
+                form.reset();
             } else {
                 const errorData = await response.json();
-                alert(errorData.detail || 'Failed to change password');
+                notificationService.showToast(errorData.detail || 'Failed to change password', 'error');
             }
         } catch (error) {
-            alert('Error changing password');
+            notificationService.showToast('Error changing password', 'error');
         }
-    });
+    }
 
     document.addEventListener('DOMContentLoaded', loadProfile);
 </script>

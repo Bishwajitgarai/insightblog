@@ -3,49 +3,82 @@
 {% block title %}Register - InsightBlog{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center">
-    <div class="card max-w-md w-full">
-        <h2 class="text-3xl font-bold mb-6 text-center neon-text">Create Account</h2>
-        
-        <form id="registerForm" class="space-y-6">
+<div class="container container-sm" style="padding: 4rem 0;">
+    <div class="card card-glass" style="max-width: 450px; margin: 0 auto;">
+        <div class="text-center mb-lg">
+            <h2 style="background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                Join InsightBlog
+            </h2>
+            <p class="text-muted">Start sharing your insights today</p>
+        </div>
+
+        <form id="registerForm" class="flex flex-col gap-md">
             <div>
-                <label for="full_name" class="block text-sm font-medium text-gray-400">Full Name</label>
-                <div class="mt-1">
-                    <input id="full_name" name="full_name" type="text" required>
-                </div>
+                <label for="full_name" class="text-sm font-semibold" style="display: block; margin-bottom: 0.5rem;">Full Name</label>
+                <input 
+                    type="text" 
+                    id="full_name" 
+                    name="full_name" 
+                    class="input" 
+                    placeholder="John Doe" 
+                    required
+                    autocomplete="name"
+                >
             </div>
 
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-400">Email address</label>
-                <div class="mt-1">
-                    <input id="email" name="email" type="email" autocomplete="email" required>
-                </div>
+                <label for="email" class="text-sm font-semibold" style="display: block; margin-bottom: 0.5rem;">Email</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    class="input" 
+                    placeholder="you@example.com" 
+                    required
+                    autocomplete="email"
+                >
             </div>
 
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-400">Password</label>
-                <div class="mt-1">
-                    <input id="password" name="password" type="password" autocomplete="new-password" required>
-                </div>
+                <label for="password" class="text-sm font-semibold" style="display: block; margin-bottom: 0.5rem;">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="input" 
+                    placeholder="••••••••" 
+                    required
+                    autocomplete="new-password"
+                    minlength="6"
+                >
+                <p class="text-sm text-muted" style="margin-top: 0.25rem;">At least 6 characters</p>
             </div>
 
-            <div>
-                <button type="submit" class="w-full btn-neon flex justify-center">
-                    Create Account
-                </button>
+            <div class="text-sm text-muted">
+                By signing up, you agree to our 
+                <a href="#" class="text-primary">Terms of Service</a> and 
+                <a href="#" class="text-primary">Privacy Policy</a>
             </div>
 
-            <div class="text-center text-sm">
-                <span class="text-gray-400">Already have an account? </span>
-                <a href="/login" class="font-medium text-primary hover:text-secondary">Sign in</a>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <span id="register-text">Create Account</span>
+                <span id="register-spinner" class="animate-pulse" style="display: none;">Creating account...</span>
+            </button>
+
+            <div class="text-center text-sm text-muted" style="margin-top: 1rem;">
+                Already have an account? 
+                <a href="/login" class="text-primary font-semibold">Sign in</a>
             </div>
         </form>
+
+        <div id="error-message" class="mt-md" style="display: none; padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--error); border-radius: var(--radius-md);">
+            <p class="text-sm" style="color: var(--error);"></p>
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/auth.js"></script>
 <script>
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -54,13 +87,41 @@
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         
-        const result = await authService.register(email, fullName, password);
+        // Show loading state
+        document.getElementById('register-text').style.display = 'none';
+        document.getElementById('register-spinner').style.display = 'inline';
+        document.getElementById('error-message').style.display = 'none';
         
-        if (result.success) {
-            window.location.href = '/dashboard';
-        } else {
-            showToast(result.error, 'error');
+        try {
+            const success = await authService.register(fullName, email, password);
+            
+            if (success) {
+                // Show success message
+                notificationService.showToast('Account created successfully!', 'success');
+                
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 500);
+            } else {
+                throw new Error('Registration failed');
+            }
+        } catch (error) {
+            // Show error message
+            document.getElementById('register-text').style.display = 'inline';
+            document.getElementById('register-spinner').style.display = 'none';
+            
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.style.display = 'block';
+            errorDiv.querySelector('p').textContent = error.message || 'Registration failed. Please try again.';
         }
+    });
+
+    // Clear error on input
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', () => {
+            document.getElementById('error-message').style.display = 'none';
+        });
     });
 </script>
 {% endblock %}

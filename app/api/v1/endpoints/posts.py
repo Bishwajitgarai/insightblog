@@ -10,6 +10,7 @@ from app.db.session import get_session
 from app.models.blog import Post, Category, Tag, PostCategory, PostTag, PostComment, PostLike, PostShare, Notification
 from app.models.user import User
 from app.api.v1.endpoints.users import get_current_user
+from app.services.redis_service import broadcaster
 
 router = APIRouter()
 

@@ -3,20 +3,24 @@
 {% block title %}Notifications - InsightBlog{% endblock %}
 
 {% block content %}
-<div class="container mx-auto max-w-4xl">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-4xl font-bold neon-text">Notifications</h1>
-        <a href="/dashboard" class="text-gray-400 hover:text-primary transition">← Back to Dashboard</a>
+<div class="container container-sm" style="padding: 2rem 0;">
+    <h1 style="margin-bottom: 2rem;">Notifications</h1>
+
+    <!-- Loading -->
+    <div id="loading" class="text-center" style="padding: 2rem 0;">
+        <div class="skeleton skeleton-text"></div>
+        <div class="skeleton skeleton-text"></div>
+        <div class="skeleton skeleton-text"></div>
     </div>
 
-    <div id="loading" class="text-center py-10">
-        <p class="text-gray-500">Loading notifications...</p>
-    </div>
+    <!-- Notifications Container -->
+    <div id="notifications-container" class="flex flex-col gap-md" style="display: none;"></div>
 
-    <div id="notifications-container" class="card hidden"></div>
-
-    <div id="empty-state" class="hidden card text-center py-10">
-        <p class="text-gray-500 text-lg">No notifications yet</p>
+    <!-- Empty State -->
+    <div id="empty-state" class="card text-center" style="display: none; padding: 4rem 2rem;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🔔</div>
+        <h3>No notifications yet</h3>
+        <p class="text-muted">You're all caught up!</p>
     </div>
 </div>
 {% endblock %}
@@ -26,42 +30,55 @@
     async function loadNotifications() {
         try {
             const response = await authService.apiCall('/api/v1/posts/notifications/');
+            
+            if (!response.ok) {
+                throw new Error('Failed to load notifications');
+            }
+            
             const data = await response.json();
             
-            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('loading').style.display = 'none';
             
-            if (data.notifications.length === 0) {
-                document.getElementById('empty-state').classList.remove('hidden');
+            if (!data.notifications || data.notifications.length === 0) {
+                document.getElementById('empty-state').style.display = 'block';
                 return;
             }
             
             renderNotifications(data.notifications);
-            document.getElementById('notifications-container').classList.remove('hidden');
+            document.getElementById('notifications-container').style.display = 'flex';
         } catch (error) {
-            document.getElementById('loading').innerHTML = '<p class="text-red-500">Error loading notifications</p>';
+            console.error('Error loading notifications:', error);
+            document.getElementById('loading').innerHTML = '<div class="card text-center"><p class="text-error">Error loading notifications</p></div>';
         }
     }
 
     function renderNotifications(notifications) {
         const container = document.getElementById('notifications-container');
-        container.innerHTML = '<div class="space-y-4"></div>';
-        const list = container.querySelector('.space-y-4');
+        container.innerHTML = '';
         
         notifications.forEach(notif => {
             const icon = notif.type === 'like' ? '❤️' : notif.type === 'comment' ? '💬' : '🔄';
-            const bgClass = notif.read ? 'bg-gray-800/50' : 'bg-primary/10';
+            const bgClass = notif.read ? '' : 'style="background: rgba(99, 102, 241, 0.1);"';
             
             const notifHtml = `
-                <div class="flex items-start space-x-4 p-4 ${bgClass} rounded-lg">
-                    <div class="flex-shrink-0 text-2xl">${icon}</div>
-                    <div class="flex-1">
-                        <p class="text-gray-300">${notif.content}</p>
-                        <p class="text-xs text-gray-500 mt-1">${new Date(notif.created_at).toLocaleString()}</p>
+                <div class="card" ${bgClass}>
+                    <div class="flex items-start gap-md">
+                        <div style="font-size: 1.5rem;">${icon}</div>
+                        <div style="flex: 1;">
+                            <p>${notif.content}</p>
+                            <p class="text-sm text-muted" style="margin-top: 0.25rem;">
+                                ${new Date(notif.created_at).toLocaleString()}
+                            </p>
+                        </div>
+                        ${notif.post_id ? `
+                            <a href="/posts/${notif.post_id}" class="btn btn-ghost" style="padding: 0.5rem 1rem;">
+                                View Post
+                            </a>
+                        ` : ''}
                     </div>
-                    ${notif.post_id ? `<a href="/posts/${notif.post_id}" class="text-sm text-primary hover:underline">View Post</a>` : ''}
                 </div>
             `;
-            list.innerHTML += notifHtml;
+            container.innerHTML += notifHtml;
         });
     }
 

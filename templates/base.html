@@ -4,84 +4,176 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}InsightBlog{% endblock %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="/static/css/styles.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        bg: '#0a0a0a',
-                        card: '#1a1a1a',
-                        primary: '#00ffcc',
-                        secondary: '#ff00ff',
-                    }
-                }
-            }
+    
+    <style>
+        /* Additional page-specific styles */
+        .navbar {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-    </script>
+        
+        .navbar-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .nav-link {
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: color var(--transition-fast);
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary);
+        }
+        
+        .notification-icon {
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--error);
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.125rem 0.375rem;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        footer {
+            margin-top: auto;
+            padding: 1rem 0;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+    </style>
 </head>
-<body class="bg-bg text-gray-200 min-h-screen flex flex-col">
-    <nav class="border-b border-gray-800 bg-card p-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <a href="/" class="text-2xl font-bold neon-text">InsightBlog</a>
-            <div class="space-x-4" id="nav-links">
-                <!-- Navigation will be loaded dynamically -->
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <a href="/" class="logo">InsightBlog</a>
+                <div class="nav-links" id="nav-links">
+                    <!-- Links will be loaded dynamically -->
+                </div>
             </div>
         </div>
     </nav>
 
-    <main class="container mx-auto p-4 flex-grow">
+    <!-- Main Content -->
+    <main style="min-height: calc(100vh - 150px); padding: 1rem 0;">
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="border-t border-gray-800 bg-card p-4 text-center text-gray-500">
-        <p>&copy; 2025 InsightBlog. All rights reserved.</p>
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year"></span> InsightBlog. All rights reserved.</p>
+        </div>
     </footer>
 
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script>
-        function showToast(message, type = 'info') {
-            let bg = "linear-gradient(to right, #00b09b, #96c93d)";
-            if (type === 'success') bg = "linear-gradient(to right, #00b09b, #96c93d)";
-            if (type === 'error') bg = "linear-gradient(to right, #ff5f6d, #ffc371)";
-            
-            Toastify({
-                text: message,
-                duration: 3000,
-                gravity: "top",
-                position: "right",
-                style: {
-                    background: bg,
-                },
-                className: "neon-border"
-            }).showToast();
-        }
-    </script>
+    <!-- Scripts -->
     <script src="/static/js/auth.js"></script>
+    <script src="/static/js/notifications.js"></script>
     <script>
-        // Load navigation dynamically based on auth state
-        function updateNavigation() {
+        // Set current year dynamically
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        // Update navigation dynamically
+        async function updateNavigation() {
             const navLinks = document.getElementById('nav-links');
             
             if (authService.isAuthenticated()) {
+                // Fetch user data for profile image
+                let userName = 'User';
+                let userImage = null;
+                
+                try {
+                    const response = await authService.apiCall('/api/v1/users/me');
+                    if (response.ok) {
+                        const user = await response.json();
+                        userName = user.full_name || 'User';
+                        userImage = user.profile_image_url;
+                    }
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                }
+                
+                const profileImageUrl = userImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=40`;
+                
                 navLinks.innerHTML = `
-                    <a href="/dashboard" class="hover:text-primary transition">Dashboard</a>
-                    <a href="/profile" class="hover:text-primary transition">Profile</a>
-                    <a href="/notifications" class="text-secondary hover:text-primary transition">Notifications</a>
-                    <a href="#" onclick="authService.logout(); return false;" class="hover:text-red-400 transition">Logout</a>
+                    <a href="/dashboard" class="nav-link">Feed</a>
+                    <a href="/posts/create" class="btn btn-primary" style="padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Create Post
+                    </a>
+                    <a href="/notifications" class="notification-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        <span id="notification-badge" class="notification-badge" style="display: none;">0</span>
+                    </a>
+                    <a href="/profile" style="display: flex; align-items: center;">
+                        <img src="${profileImageUrl}" alt="${userName}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
+                    </a>
+                    <button onclick="authService.logout()" class="btn btn-ghost" style="padding: 0.5rem 1rem;">
+                        Logout
+                    </button>
                 `;
             } else {
                 navLinks.innerHTML = `
-                    <a href="/login" class="btn-neon">Login</a>
-                    <a href="/register" class="btn-neon">Register</a>
+                    <a href="/login" class="btn btn-ghost">Login</a>
+                    <a href="/register" class="btn btn-primary">Get Started</a>
                 `;
             }
         }
         
-        // Update navigation on page load
         document.addEventListener('DOMContentLoaded', updateNavigation);
     </script>
     {% block scripts %}{% endblock %}
