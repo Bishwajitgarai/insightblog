@@ -1,0 +1,38 @@
+services:
+  vespa:
+    image: vespaengine/vespa
+    container_name: vespa
+    ports:
+      - "${VESPA_PORT}:8080"
+      - "19071:19071"
+    volumes:
+      - vespa_data:/opt/vespa/var
+    environment:
+      - VESPA_CONFIGSERVERS=vespa
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - "5433:5432"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  vespa_data:
+  redis_data:
+  postgres_data:

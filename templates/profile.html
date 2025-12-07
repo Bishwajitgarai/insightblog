@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - InsightBlog{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto mt-10">
+    <div class="card">
+        <h2 class="text-3xl font-bold mb-6 text-center neon-text">Your Profile</h2>
+        
+        <div class="flex flex-col items-center mb-8">
+            <div class="w-32 h-32 rounded-full overflow-hidden border-2 border-primary mb-4 relative group">
+                <img id="profileImage" src="{{ user.profile_image_url or 'https://via.placeholder.com/150' }}" alt="Profile" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer" onclick="document.getElementById('avatarInput').click()">
+                    <span class="text-white text-sm">Change</span>
+                </div>
+            </div>
+            <input type="file" id="avatarInput" class="hidden" accept="image/*">
+            <h3 class="text-xl font-semibold text-gray-200">{{ user.full_name }}</h3>
+            <p class="text-gray-400">{{ user.email }}</p>
+        </div>
+
+        <form id="profileForm" class="space-y-6">
+            <div>
+                <label for="full_name" class="block text-sm font-medium text-gray-400">Full Name</label>
+                <div class="mt-1">
+                    <input id="full_name" name="full_name" type="text" value="{{ user.full_name or '' }}">
+                </div>
+            </div>
+
+            <div>
+                <label for="bio" class="block text-sm font-medium text-gray-400">Bio</label>
+                <div class="mt-1">
+                    <textarea id="bio" name="bio" rows="3" class="w-full bg-input-bg border border-border-color text-gray-200 rounded p-3 focus:outline-none focus:border-primary">{{ user.bio or '' }}</textarea>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" class="w-full btn-neon flex justify-center">
+                    Update Profile
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Avatar Upload
+    document.getElementById('avatarInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/v1/users/me/avatar', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}` // Note: Cookie auth is better for web, but using token for now if stored
+                },
+                body: formData
+            });
+
+            // Since we are using cookie-based auth for web routes but maybe token for API...
+            // Wait, the web routes use `request.state.user` or similar?
+            // Actually, the API endpoints expect Bearer token.
+            // The web frontend needs to send the token.
+            // I haven't implemented token storage in frontend yet!
+            // The Login page just redirects. It doesn't store token in localStorage.
+            // I need to fix Login to store token or use Cookies.
+            // For now, let's assume we need to fix Login to store token.
+            
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('profileImage').src = data.profile_image_url;
+                showToast('Avatar updated!', 'success');
+            } else {
+                showToast('Failed to upload avatar', 'error');
+            }
+        } catch (error) {
+            showToast('Error uploading avatar', 'error');
+        }
+    });
+
+    // Profile Update
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch('/api/v1/users/me', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                showToast('Profile updated!', 'success');
+            } else {
+                showToast('Failed to update profile', 'error');
+            }
+        } catch (error) {
+            showToast('Error updating profile', 'error');
+        }
+    });
+</script>
+{% endblock %}

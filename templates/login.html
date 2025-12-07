@@ -1,0 +1,71 @@
+
+{% extends "base.html" %}
+
+{% block title %}Login - InsightBlog{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-10">
+    <div class="card">
+        <h2 class="text-3xl font-bold mb-6 text-center neon-text">Login</h2>
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-400">Email address</label>
+                <div class="mt-1">
+                    <input id="email" name="username" type="email" autocomplete="email" required>
+                </div>
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-400">Password</label>
+                <div class="mt-1">
+                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <div class="text-sm">
+                    <a href="/forgot-password" class="font-medium text-secondary hover:text-primary">Forgot your password?</a>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" class="w-full btn-neon flex justify-center">
+                    Sign in
+                </button>
+            </div>
+        </form>
+        <div class="mt-4 text-center">
+            <p class="text-sm text-gray-400">Don't have an account? <a href="/register" class="font-medium text-secondary hover:text-primary">Register</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        
+        try {
+            const response = await fetch('/api/v1/users/login', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('token', data.access_token);
+                document.cookie = `access_token=Bearer ${data.access_token}; path=/; max-age=1800`; // 30 mins
+                showToast('Login successful!', 'success');
+                setTimeout(() => window.location.href = '/dashboard', 1000);
+            } else {
+                const data = await response.json();
+                showToast(data.detail || 'Login failed', 'error');
+            }
+        } catch (error) {
+            showToast('An error occurred', 'error');
+        }
+    });
+</script>
+{% endblock %}
