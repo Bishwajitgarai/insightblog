@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str = "admin@insightblog.com"
     ADMIN_PASSWORD: str = "admin123"
 
+    # Logging
+    LOG_LEVEL: str = "INFO"
+    LOG_DIR: str = "logs"
+    LOG_FILENAME: str = "app.log"
+    LOG_MAX_BYTES: int = 10 * 1024 * 1024  # 10 MB
+    LOG_BACKUP_COUNT: int = 10
+
     @property
     def DATABASE_URL(self) -> str:
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"

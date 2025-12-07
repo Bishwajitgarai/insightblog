@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
@@ -8,7 +8,8 @@ import os
 from pathlib import Path
 
 from app.db.session import get_session
-from app.models.user import User, UserCreate, UserRead, UserUpdate
+from app.models.user import User
+from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.services.auth import get_password_hash, verify_password, create_access_token
 from app.services.otp import create_otp, verify_otp
 from app.core.config import get_settings
@@ -61,13 +62,14 @@ async def register(user: UserCreate, session: AsyncSession = Depends(get_session
     return db_user
 
 @router.post("/login")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: AsyncSession = Depends(get_session)):
+async def login(response: Response, form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: AsyncSession = Depends(get_session)):
     result = await session.exec(select(User).where(User.email == form_data.username))
     user = result.first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     
     access_token = create_access_token(data={"sub": user.email})
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserRead)

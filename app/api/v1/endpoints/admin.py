@@ -4,7 +4,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 
 from app.db.session import get_session
-from app.models.user import User, UserRead, Role
+from app.models.user import User, Role
+from app.schemas.user import UserRead
 from app.api.v1.endpoints.users import get_current_user
 
 router = APIRouter()

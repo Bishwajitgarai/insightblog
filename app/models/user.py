@@ -18,18 +18,4 @@ class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str
 
-class UserCreate(UserBase):
-    password: str
 
-class UserRead(UserBase):
-    id: int
-    profile_image_url: Optional[str] = None
-    bio: Optional[str] = None
-
-class UserUpdate(SQLModel):
-    full_name: Optional[str] = None
-    password: Optional[str] = None
-    email: Optional[str] = None
-    role: Optional[Role] = None
-    profile_image_url: Optional[str] = None
-    bio: Optional[str] = None

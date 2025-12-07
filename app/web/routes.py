@@ -6,7 +6,7 @@ from sqlmodel import select
 from typing import Optional
 
 from app.db.session import get_session
-from app.models.user import User, UserCreate
+from app.models.user import User
 from app.services.auth import get_password_hash, verify_password, create_access_token
 from app.core.config import get_settings
 from jose import jwt, JWTError
@@ -15,7 +15,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 settings = get_settings()
 
-async def get_current_user_from_cookie(request: Request, session: AsyncSession):
+async def get_current_user_from_cookie(request: Request, session: AsyncSession = Depends(get_session)):
     token = request.cookies.get("access_token")
     if not token:
         return None
@@ -32,8 +32,7 @@ async def get_current_user_from_cookie(request: Request, session: AsyncSession):
     return result.first()
 
 @router.get("/", response_class=HTMLResponse)
-async def index(request: Request, session: AsyncSession = Depends(get_session)):
-    user = await get_current_user_from_cookie(request, session)
+async def index(request: Request, user: Optional[User] = Depends(get_current_user_from_cookie)):
     if user:
         return RedirectResponse(url="/dashboard")
     return templates.TemplateResponse("login.html", {"request": request})
@@ -75,8 +74,7 @@ async def register(request: Request, email: str = Form(...), password: str = For
     return response
 
 @router.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, session: AsyncSession = Depends(get_session)):
-    user = await get_current_user_from_cookie(request, session)
+async def dashboard(request: Request, user: Optional[User] = Depends(get_current_user_from_cookie)):
     if not user:
         return RedirectResponse(url="/login")
     
@@ -102,8 +100,7 @@ async def reset_password_page(request: Request):
     return templates.TemplateResponse("reset_password.html", {"request": request})
 
 @router.get("/profile", response_class=HTMLResponse)
-async def profile_page(request: Request, session: AsyncSession = Depends(get_session)):
-    user = await get_current_user_from_cookie(request, session)
+async def profile_page(request: Request, user: Optional[User] = Depends(get_current_user_from_cookie)):
     if not user:
         return RedirectResponse(url="/login")
     return templates.TemplateResponse("profile.html", {"request": request, "user": user})

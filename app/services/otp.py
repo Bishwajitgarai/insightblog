@@ -2,6 +2,7 @@ import random
 import string
 from app.core.redis import redis_client
 from app.core.config import get_settings
+from app.core.logging import logger
 
 settings = get_settings()
 
@@ -15,9 +16,7 @@ async def create_otp(email: str) -> str:
     await redis_client.setex(f"otp:{email}", OTP_EXPIRY, otp)
     
     if settings.ENV == "dev":
-        print(f"========================================")
-        print(f"OTP for {email}: {otp}")
-        print(f"========================================")
+        logger.info(f"OTP for {email}: {otp}")
         
     return otp
 

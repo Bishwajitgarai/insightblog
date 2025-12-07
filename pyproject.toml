@@ -18,5 +18,8 @@ dependencies = [
     "passlib[argon2]",
     "python-jose[cryptography]",
     "loguru",
-    "python-multipart"
+    "python-multipart",
+    "pytest",
+    "httpx",
+    "pytest-asyncio"
 ]
