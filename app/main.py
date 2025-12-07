@@ -4,7 +4,8 @@ from app.api.v1.api import api_router
 from app.web.routes import router as web_router
 from app.core.config import get_settings
 from app.core.logging import setup_logging
-from app.db.session import init_db
+from app.db.session import init_db, get_session
+from app.db.seed import seed_admin_user
 
 settings = get_settings()
 
@@ -22,6 +23,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def on_startup():
     setup_logging()
     await init_db()
+    
+    # Seed admin user
+    async for session in get_session():
+        await seed_admin_user(session)
+        break
 
 from app.core.logging import logger
 

@@ -39,13 +39,54 @@
                     Update Profile
                 </button>
             </div>
+            
+            <div class="pt-4 border-t border-gray-800">
+                <button type="button" onclick="toggleChangePasswordModal()" class="w-full border border-primary text-primary hover:bg-primary hover:text-black font-bold py-2 px-4 rounded transition">
+                    Change Password
+                </button>
+            </div>
         </form>
     </div>
-</div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-card border border-primary p-8 rounded-lg w-full max-w-md relative shadow-[0_0_15px_rgba(0,255,204,0.3)]">
+            <button onclick="toggleChangePasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h3 class="text-2xl font-bold mb-6 neon-text text-center">Change Password</h3>
+            <form id="changePasswordForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Current Password</label>
+                    <input type="password" name="old_password" required class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded p-3 focus:outline-none focus:border-primary transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">New Password</label>
+                    <input type="password" name="new_password" required class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded p-3 focus:outline-none focus:border-primary transition">
+                </div>
+                <!-- TODO: Confirm Password field could be added here for better UX -->
+                <button type="submit" class="w-full btn-neon mt-4 flex justify-center py-3">Update Password</button>
+            </form>
+        </div>
+    </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+    function toggleChangePasswordModal() {
+        const modal = document.getElementById('changePasswordModal');
+        modal.classList.toggle('hidden');
+        modal.classList.toggle('flex');
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('changePasswordModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('changePasswordModal')) {
+            toggleChangePasswordModal();
+        }
+    });
     // Avatar Upload
     document.getElementById('avatarInput').addEventListener('change', async (e) => {
         const file = e.target.files[0];
@@ -107,6 +148,35 @@
             }
         } catch (error) {
             showToast('Error updating profile', 'error');
+        }
+    });
+
+    // Change Password
+    document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch('/api/v1/users/me/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                showToast('Password changed successfully!', 'success');
+                toggleChangePasswordModal();
+                e.target.reset();
+            } else {
+                const errorData = await response.json();
+                showToast(errorData.detail || 'Failed to change password', 'error');
+            }
+        } catch (error) {
+            showToast('Error changing password', 'error');
         }
     });
 </script>
