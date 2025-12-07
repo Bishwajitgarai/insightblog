@@ -12,30 +12,134 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for item in feed %}
-        <a href="/posts/{{ item.id }}" class="card hover:border-primary transition duration-300 overflow-hidden block">
-            {% if item.image_url %}
-            <div class="w-full h-48 bg-gray-800 mb-4 rounded-lg overflow-hidden">
-                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover">
-            </div>
-            {% endif %}
-            <h3 class="text-xl font-bold mb-2 text-primary">{{ item.title }}</h3>
-            <p class="text-gray-400 mb-4">{{ item.body }}</p>
-            <div class="flex justify-between items-center text-xs text-gray-500">
-                <span>{{ item.created_at.strftime('%b %d, %Y') if item.created_at else '' }}</span>
-                <div class="flex space-x-4">
-                    <span>❤️ {{ item.like_count if item.like_count else 0 }}</span>
-                    <span>💬 {{ item.comment_count if item.comment_count else 0 }}</span>
-                </div>
-            </div>
-        </a>
-        {% else %}
-        <div class="col-span-full text-center py-10">
-            <p class="text-gray-500 text-xl mb-4">No posts available yet.</p>
-            <a href="/posts/create" class="btn-neon">Create Your First Post</a>
-        </div>
-        {% endfor %}
+    <div id="posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Posts will be loaded here -->
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="loading" class="text-center py-10">
+        <p class="text-gray-500">Loading posts...</p>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="hidden col-span-full text-center py-10">
+        <p class="text-gray-500 text-xl mb-4">No posts available yet.</p>
+        <a href="/posts/create" class="btn-neon">Create Your First Post</a>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="hidden flex justify-center space-x-4 mt-8">
+        <button id="prev-btn" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition" disabled>
+            Previous
+        </button>
+        <span id="page-info" class="px-4 py-2 text-gray-400"></span>
+        <button id="next-btn" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
+            Next
+        </button>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentPage = 0;
+    const postsPerPage = 12;
+    let totalPosts = 0;
+
+    async function loadPosts(page = 0) {
+        const skip = page * postsPerPage;
+        
+        try {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('posts-grid').innerHTML = '';
+            
+            const response = await authService.apiCall(`/api/v1/posts/?skip=${skip}&limit=${postsPerPage}&published_only=true`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to load posts');
+            }
+            
+            const data = await response.json();
+            totalPosts = data.total;
+            
+            document.getElementById('loading').classList.add('hidden');
+            
+            if (data.posts.length === 0 && page === 0) {
+                document.getElementById('empty-state').classList.remove('hidden');
+                return;
+            }
+            
+            renderPosts(data.posts);
+            updatePagination(page, data.total);
+            
+        } catch (error) {
+            console.error('Error loading posts:', error);
+            document.getElementById('loading').innerHTML = '<p class="text-red-500">Error loading posts</p>';
+        }
+    }
+
+    function renderPosts(posts) {
+        const grid = document.getElementById('posts-grid');
+        grid.innerHTML = '';
+        
+        posts.forEach(post => {
+            const postCard = `
+                <a href="/posts/${post.id}" class="card hover:border-primary transition duration-300 overflow-hidden block">
+                    ${post.image_url ? `
+                        <div class="w-full h-48 bg-gray-800 mb-4 rounded-lg overflow-hidden">
+                            <img src="${post.image_url}" alt="${post.title}" class="w-full h-full object-cover">
+                        </div>
+                    ` : ''}
+                    <h3 class="text-xl font-bold mb-2 text-primary">${post.title}</h3>
+                    <p class="text-gray-400 mb-4">${post.summary || 'No summary available'}</p>
+                    <div class="flex justify-between items-center text-xs text-gray-500">
+                        <span>${new Date(post.created_at).toLocaleDateString()}</span>
+                        <div class="flex space-x-4">
+                            <span>❤️ ${post.like_count || 0}</span>
+                            <span>💬 ${post.comment_count || 0}</span>
+                        </div>
+                    </div>
+                </a>
+            `;
+            grid.innerHTML += postCard;
+        });
+    }
+
+    function updatePagination(page, total) {
+        const totalPages = Math.ceil(total / postsPerPage);
+        
+        if (totalPages <= 1) {
+            document.getElementById('pagination').classList.add('hidden');
+            return;
+        }
+        
+        document.getElementById('pagination').classList.remove('hidden');
+        document.getElementById('page-info').textContent = `Page ${page + 1} of ${totalPages}`;
+        
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        
+        prevBtn.disabled = page === 0;
+        nextBtn.disabled = page >= totalPages - 1;
+        
+        prevBtn.onclick = () => {
+            if (page > 0) {
+                currentPage = page - 1;
+                loadPosts(currentPage);
+            }
+        };
+        
+        nextBtn.onclick = () => {
+            if (page < totalPages - 1) {
+                currentPage = page + 1;
+                loadPosts(currentPage);
+            }
+        };
+    }
+
+    // Load posts on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadPosts(0);
+    });
+</script>
 {% endblock %}

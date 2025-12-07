@@ -27,19 +27,8 @@
     <nav class="border-b border-gray-800 bg-card p-4">
         <div class="container mx-auto flex justify-between items-center">
             <a href="/" class="text-2xl font-bold neon-text">InsightBlog</a>
-            <div class="space-x-4">
-                {% if user %}
-                    <span class="text-gray-400">Welcome, {{ user.full_name }}</span>
-                    <a href="/dashboard" class="hover:text-primary transition">Dashboard</a>
-                    <a href="/profile" class="hover:text-primary transition">Profile</a>
-                    {% if user.role == 'admin' %}
-                        <a href="/admin" class="text-secondary hover:text-primary transition">Admin</a>
-                    {% endif %}
-                    <a href="/logout" class="hover:text-red-400 transition">Logout</a>
-                {% else %}
-                    <a href="/login" class="btn-neon">Login</a>
-                    <a href="/register" class="btn-neon">Register</a>
-                {% endif %}
+            <div class="space-x-4" id="nav-links">
+                <!-- Navigation will be loaded dynamically -->
             </div>
         </div>
     </nav>
@@ -48,14 +37,14 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="border-t border-gray-800 bg-card p-4 text-center text-gray-500 mt-8">
-        &copy; 2025 InsightBlog. All rights reserved.
+    <footer class="border-t border-gray-800 bg-card p-4 text-center text-gray-500">
+        <p>&copy; 2025 InsightBlog. All rights reserved.</p>
     </footer>
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
         function showToast(message, type = 'info') {
-            let bg = "#333";
+            let bg = "linear-gradient(to right, #00b09b, #96c93d)";
             if (type === 'success') bg = "linear-gradient(to right, #00b09b, #96c93d)";
             if (type === 'error') bg = "linear-gradient(to right, #ff5f6d, #ffc371)";
             
@@ -71,7 +60,30 @@
             }).showToast();
         }
     </script>
+    <script src="/static/js/auth.js"></script>
+    <script>
+        // Load navigation dynamically based on auth state
+        function updateNavigation() {
+            const navLinks = document.getElementById('nav-links');
+            
+            if (authService.isAuthenticated()) {
+                navLinks.innerHTML = `
+                    <a href="/dashboard" class="hover:text-primary transition">Dashboard</a>
+                    <a href="/profile" class="hover:text-primary transition">Profile</a>
+                    <a href="/notifications" class="text-secondary hover:text-primary transition">Notifications</a>
+                    <a href="#" onclick="authService.logout(); return false;" class="hover:text-red-400 transition">Logout</a>
+                `;
+            } else {
+                navLinks.innerHTML = `
+                    <a href="/login" class="btn-neon">Login</a>
+                    <a href="/register" class="btn-neon">Register</a>
+                `;
+            }
+        }
+        
+        // Update navigation on page load
+        document.addEventListener('DOMContentLoaded', updateNavigation);
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
-

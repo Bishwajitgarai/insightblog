@@ -2,9 +2,6 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from app.api.v1.api import api_router
 from app.web.routes import router as web_router
-from app.web.post_routes import router as post_router
-from app.web.notification_routes import router as notification_router
-from app.web.profile_routes import router as profile_router
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.db.session import init_db, get_session
@@ -43,6 +40,3 @@ async def health_check():
 
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(web_router)
-app.include_router(post_router)
-app.include_router(notification_router)
-app.include_router(profile_router)

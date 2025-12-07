@@ -3,10 +3,10 @@
 {% block title %}Register - InsightBlog{% endblock %}
 
 {% block content %}
-
-<div class="max-w-md mx-auto mt-10">
-    <div class="card">
-        <h2 class="text-3xl font-bold mb-6 text-center neon-text">Register</h2>
+<div class="min-h-screen flex items-center justify-center">
+    <div class="card max-w-md w-full">
+        <h2 class="text-3xl font-bold mb-6 text-center neon-text">Create Account</h2>
+        
         <form id="registerForm" class="space-y-6">
             <div>
                 <label for="full_name" class="block text-sm font-medium text-gray-400">Full Name</label>
@@ -31,56 +31,35 @@
 
             <div>
                 <button type="submit" class="w-full btn-neon flex justify-center">
-                    Register
+                    Create Account
                 </button>
             </div>
+
+            <div class="text-center text-sm">
+                <span class="text-gray-400">Already have an account? </span>
+                <a href="/login" class="font-medium text-primary hover:text-secondary">Sign in</a>
+            </div>
         </form>
-        <div class="mt-4 text-center">
-            <p class="text-sm text-gray-400">Already have an account? <a href="/login" class="font-medium text-secondary hover:text-primary">Sign in</a></p>
-        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/auth.js"></script>
 <script>
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
         
-        try {
-            const response = await fetch('/api/v1/users/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            
-            if (response.ok) {
-                // Auto login
-                const loginData = new FormData();
-                loginData.append('username', data.email);
-                loginData.append('password', data.password);
-                
-                const loginResponse = await fetch('/api/v1/users/login', {
-                    method: 'POST',
-                    body: loginData
-                });
-                
-                if (loginResponse.ok) {
-                    showToast('Registration successful!', 'success');
-                    setTimeout(() => window.location.href = '/dashboard', 1000);
-                } else {
-                    window.location.href = '/login';
-                }
-            } else {
-                const errorData = await response.json();
-                showToast(errorData.detail || 'Registration failed', 'error');
-            }
-        } catch (error) {
-            showToast('An error occurred', 'error');
+        const fullName = document.getElementById('full_name').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        const result = await authService.register(email, fullName, password);
+        
+        if (result.success) {
+            window.location.href = '/dashboard';
+        } else {
+            showToast(result.error, 'error');
         }
     });
 </script>
