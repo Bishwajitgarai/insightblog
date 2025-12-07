@@ -23,7 +23,7 @@
             <div>
                 <label for="full_name" class="block text-sm font-medium text-gray-400">Full Name</label>
                 <div class="mt-1">
-                    <input id="full_name" name="full_name" type="text" value="{{ user.full_name or '' }}">
+                    <input id="full_name" name="full_name" type="text" value="{{ user.full_name or '' }}" class="w-full bg-input-bg border border-border-color text-gray-200 rounded p-3 focus:outline-none focus:border-primary">
                 </div>
             </div>
 
@@ -66,7 +66,6 @@
                     <label class="block text-sm font-medium text-gray-400 mb-1">New Password</label>
                     <input type="password" name="new_password" required class="w-full bg-[#0a0a0a] border border-gray-700 text-gray-200 rounded p-3 focus:outline-none focus:border-primary transition">
                 </div>
-                <!-- TODO: Confirm Password field could be added here for better UX -->
                 <button type="submit" class="w-full btn-neon mt-4 flex justify-center py-3">Update Password</button>
             </form>
         </div>
@@ -87,6 +86,7 @@
             toggleChangePasswordModal();
         }
     });
+
     // Avatar Upload
     document.getElementById('avatarInput').addEventListener('change', async (e) => {
         const file = e.target.files[0];
@@ -96,32 +96,20 @@
         formData.append('file', file);
 
         try {
-            const response = await fetch('/api/v1/users/me/avatar', {
+            const response = await fetch('/profile/avatar', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}` // Note: Cookie auth is better for web, but using token for now if stored
-                },
                 body: formData
             });
 
-            // Since we are using cookie-based auth for web routes but maybe token for API...
-            // Wait, the web routes use `request.state.user` or similar?
-            // Actually, the API endpoints expect Bearer token.
-            // The web frontend needs to send the token.
-            // I haven't implemented token storage in frontend yet!
-            // The Login page just redirects. It doesn't store token in localStorage.
-            // I need to fix Login to store token or use Cookies.
-            // For now, let's assume we need to fix Login to store token.
-            
             if (response.ok) {
                 const data = await response.json();
                 document.getElementById('profileImage').src = data.profile_image_url;
-                showToast('Avatar updated!', 'success');
+                alert('Avatar updated successfully!');
             } else {
-                showToast('Failed to upload avatar', 'error');
+                alert('Failed to upload avatar');
             }
         } catch (error) {
-            showToast('Error uploading avatar', 'error');
+            alert('Error uploading avatar');
         }
     });
 
@@ -129,25 +117,21 @@
     document.getElementById('profileForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
 
         try {
-            const response = await fetch('/api/v1/users/me', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(data)
+            const response = await fetch('/profile/update', {
+                method: 'POST',
+                body: formData
             });
 
             if (response.ok) {
-                showToast('Profile updated!', 'success');
+                alert('Profile updated successfully!');
+                window.location.reload();
             } else {
-                showToast('Failed to update profile', 'error');
+                alert('Failed to update profile');
             }
         } catch (error) {
-            showToast('Error updating profile', 'error');
+            alert('Error updating profile');
         }
     });
 
@@ -155,28 +139,23 @@
     document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
 
         try {
-            const response = await fetch('/api/v1/users/me/change-password', {
+            const response = await fetch('/profile/change-password', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(data)
+                body: formData
             });
 
             if (response.ok) {
-                showToast('Password changed successfully!', 'success');
+                alert('Password changed successfully!');
                 toggleChangePasswordModal();
                 e.target.reset();
             } else {
                 const errorData = await response.json();
-                showToast(errorData.detail || 'Failed to change password', 'error');
+                alert(errorData.detail || 'Failed to change password');
             }
         } catch (error) {
-            showToast('Error changing password', 'error');
+            alert('Error changing password');
         }
     });
 </script>

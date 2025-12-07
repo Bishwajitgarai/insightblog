@@ -146,7 +146,6 @@ async def create_post(
     summary: str = Form(...),
     category: str = Form(...),
     tags: Optional[str] = Form(None),
-    published: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     user: Optional[User] = Depends(get_current_user_from_cookie),
     session: AsyncSession = Depends(get_session)
@@ -169,18 +168,16 @@ async def create_post(
         
         image_url = f"/static/uploads/{unique_filename}"
     
-    # Create the post
-    is_published = published == "true"
-    
+    # Create the post (auto-publish all posts)
     new_post = Post(
         author_id=user.id,
         title=title,
         summary=summary,
         image_url=image_url,
-        published=is_published,
+        published=True,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
-        published_at=datetime.utcnow() if is_published else None
+        published_at=datetime.utcnow()  # Always set since auto-publishing
     )
     
     session.add(new_post)
