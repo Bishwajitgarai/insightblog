@@ -27,6 +27,11 @@
 
 {% block scripts %}
 <script>
+    // Check authentication
+    if (!authService.isAuthenticated()) {
+        window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+    }
+
     async function loadNotifications() {
         try {
             const response = await authService.apiCall('/api/v1/posts/notifications/');

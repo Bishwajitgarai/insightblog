@@ -22,6 +22,63 @@ A modern, API-first blogging platform built with FastAPI and featuring social in
 - 🔒 **Secure** - JWT tokens, password hashing, input validation
 - 📖 **Well-documented** - Complete API documentation included
 
+## 📸 Gallery
+
+<div align="center">
+  <img src="static/git/images/3_dashboard.png" alt="Dashboard" width="800"/>
+  <p><em>Modern Dashboard with Grid Layout</em></p>
+</div>
+
+<div align="center">
+  <img src="static/git/images/5_post_view.png" alt="Post View" width="800"/>
+  <p><em>Immersive Post Reading Experience</em></p>
+</div>
+
+<div align="center">
+   <table border="0">
+      <tr>
+         <td width="50%">
+            <p align="center"><b>Login with Glassmorphism</b></p>
+            <img src="static/git/images/1_login_page.png" width="100%"/>
+         </td>
+         <td width="50%">
+            <p align="center"><b>Registration Flow</b></p>
+            <img src="static/git/images/2_register_page.png" width="100%"/>
+         </td>
+      </tr>
+      <tr>
+         <td>
+            <p align="center"><b>Public Profiles</b></p>
+            <img src="static/git/images/7_public_profile.png" width="100%"/>
+         </td>
+         <td>
+            <p align="center"><b>User Settings</b></p>
+            <img src="static/git/images/6_profile_settings.png" width="100%"/>
+         </td>
+      </tr>
+      <tr>
+         <td>
+            <p align="center"><b>Notifications Center</b></p>
+            <img src="static/git/images/8_notifications.png" width="100%"/>
+         </td>
+         <td>
+            <p align="center"><b>Create Post Editor</b></p>
+            <img src="static/git/images/4_create_post_page.png" width="100%"/>
+         </td>
+      </tr>
+      <tr>
+         <td>
+            <p align="center"><b>Forgot Password</b></p>
+            <img src="static/git/images/9_forgot_password.png" width="100%"/>
+         </td>
+         <td>
+            <p align="center"><b>Reset Password</b></p>
+            <img src="static/git/images/10_reset_password.png" width="100%"/>
+         </td>
+      </tr>
+   </table>
+</div>
+
 ## 🛠️ Tech Stack
 
 **Backend:**
