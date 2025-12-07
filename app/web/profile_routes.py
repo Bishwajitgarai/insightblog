@@ -8,6 +8,7 @@ from app.db.session import get_session
 from app.models.user import User
 from app.web.routes import get_current_user_from_cookie
 from app.services.auth import get_password_hash, verify_password
+from app.utils.upload_helper import get_user_profile_upload_path
 
 router = APIRouter()
 
@@ -43,16 +44,18 @@ async def upload_avatar_web(
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
-    # Save file
+    # Save file with structured path
     file_extension = os.path.splitext(file.filename)[1]
-    unique_filename = f"{user.id}_avatar{file_extension}"
-    file_path = os.path.join("static", "uploads", unique_filename)
+    unique_filename = f"avatar{file_extension}"
+    
+    # Use structured upload path
+    file_path, url_path = get_user_profile_upload_path(user.id, unique_filename)
     
     with open(file_path, "wb") as f:
         content = await file.read()
         f.write(content)
     
-    user.profile_image_url = f"/static/uploads/{unique_filename}"
+    user.profile_image_url = url_path
     session.add(user)
     await session.commit()
     

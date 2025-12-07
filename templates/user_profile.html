@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile - InsightBlog{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 0 auto;">
+    <!-- Profile Header -->
+    <div class="profile-header" style="background: var(--card-bg); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2rem; box-shadow: var(--shadow-md);">
+        <div style="display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;">
+            <div class="profile-avatar" id="profile-avatar">
+                <!-- Avatar will be loaded dynamically -->
+            </div>
+            <div style="flex: 1; min-width: 250px;">
+                <h1 id="user-fullname" style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--text-primary);">Loading...</h1>
+                <p id="user-username" style="color: var(--text-secondary); font-size: 1.125rem; margin-bottom: 1rem;">@username</p>
+                <p id="user-bio" style="color: var(--text-muted); margin-bottom: 1rem; line-height: 1.6;"></p>
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                    <div>
+                        <span id="post-count" style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">0</span>
+                        <span style="color: var(--text-secondary); margin-left: 0.5rem;">Posts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Posts Grid (Facebook Style) -->
+    <div style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--text-primary);">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 0.5rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            Posts
+        </h2>
+        
+        <!-- Loading Indicator -->
+        <div id="loading-initial" style="text-align: center; padding: 3rem;">
+            <div class="spinner"></div>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">Loading posts...</p>
+        </div>
+
+        <!-- Posts Grid -->
+        <div id="posts-grid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+            <!-- Posts will be loaded here -->
+        </div>
+
+        <!-- No Posts Message -->
+        <div id="no-posts" style="display: none; text-align: center; padding: 3rem; background: var(--card-bg); border-radius: var(--radius-lg);">
+            <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.3;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <p style="color: var(--text-secondary); font-size: 1.125rem;">No posts yet</p>
+        </div>
+
+        <!-- Loading More Indicator -->
+        <div id="loading-more" style="display: none; text-align: center; padding: 2rem;">
+            <div class="spinner"></div>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">Loading more posts...</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 4px solid var(--primary);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .post-card {
+        background: var(--card-bg);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        cursor: pointer;
+        position: relative;
+    }
+
+    .post-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .post-image-container {
+        position: relative;
+        width: 100%;
+        padding-bottom: 100%; /* 1:1 Aspect Ratio */
+        background: var(--bg-secondary);
+        overflow: hidden;
+    }
+
+    .post-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .post-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 1rem;
+        opacity: 0;
+        transition: opacity var(--transition-fast);
+    }
+
+    .post-card:hover .post-overlay {
+        opacity: 1;
+    }
+
+    .post-title {
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+    }
+
+    .post-stats {
+        display: flex;
+        gap: 1rem;
+        color: rgba(255,255,255,0.9);
+        font-size: 0.875rem;
+    }
+
+    .post-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .spinner {
+        border: 3px solid var(--border-color);
+        border-top: 3px solid var(--primary);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+        #posts-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+            gap: 0.5rem !important;
+        }
+
+        .profile-header {
+            padding: 1.5rem !important;
+        }
+
+        .profile-avatar {
+            width: 80px !important;
+            height: 80px !important;
+        }
+    }
+
+    .myself-badge {
+        font-size: 0.875rem;
+        background: var(--primary);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        vertical-align: middle;
+        margin-left: 1rem;
+        font-weight: 500;
+        letter-spacing: 0.025em;
+        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+        display: inline-block;
+        transform: translateY(-2px);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .myself-badge:hover {
+        background: var(--secondary);
+        transform: translateY(-3px);
+        box-shadow: 0 4px 6px rgba(79, 70, 229, 0.4);
+    }
+</style>
+
+<script>
+    const userId = {{ user_id }};
+    let currentPage = 0;
+    const postsPerPage = 12;
+    let isLoading = false;
+    let hasMore = true;
+
+    // Load user profile
+    async function loadUserProfile() {
+        try {
+            const response = await fetch(`/api/v1/users/profile/${userId}`);
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    notificationService.showToast('User not found', 'error');
+                    setTimeout(() => window.location.href = '/dashboard', 1000);
+                    return;
+                }
+                throw new Error('Failed to load profile');
+            }
+
+            const user = await response.json();
+            
+            // Update profile info
+            document.getElementById('user-fullname').textContent = user.full_name || 'Unknown User';
+            document.getElementById('user-username').textContent = `@${user.username}`;
+            document.getElementById('user-bio').textContent = user.bio || 'No bio available';
+            document.getElementById('post-count').textContent = user.post_count || 0;
+
+            // Update avatar
+            const avatarUrl = user.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=6366f1&color=fff&size=120`;
+            document.getElementById('profile-avatar').innerHTML = `<img src="${avatarUrl}" alt="${user.full_name}">`;
+
+            // Update page title
+            document.title = `${user.full_name} (@${user.username}) - InsightBlog`;
+
+            // Check if viewing own profile
+            try {
+                if (authService.isAuthenticated()) {
+                    const meResponse = await authService.apiCall('/api/v1/users/me');
+                    if (meResponse.ok) {
+                        const me = await meResponse.json();
+                        if (me.id === userId) {
+                            // Add "You" badge
+                            const nameElement = document.getElementById('user-fullname');
+                            const badge = document.createElement('span');
+                            badge.className = 'myself-badge';
+                            badge.textContent = 'You';
+                            badge.title = 'Edit Profile';
+                            badge.onclick = (e) => {
+                                e.stopPropagation();
+                                window.location.href = '/profile';
+                            };
+                            nameElement.appendChild(badge);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('Not logged in or error checking user', e);
+            }
+
+        } catch (error) {
+            console.error('Error loading profile:', error);
+            notificationService.showToast('Failed to load user profile', 'error');
+        }
+    }
+
+    // Load posts with pagination
+    async function loadPosts(reset = false) {
+        if (isLoading || (!hasMore && !reset)) return;
+
+        isLoading = true;
+
+        if (reset) {
+            currentPage = 0;
+            hasMore = true;
+            document.getElementById('posts-grid').innerHTML = '';
+        }
+
+        const loadingIndicator = reset ? document.getElementById('loading-initial') : document.getElementById('loading-more');
+        loadingIndicator.style.display = 'block';
+
+        try {
+            const skip = currentPage * postsPerPage;
+            const response = await fetch(`/api/v1/users/profile/${userId}/posts?skip=${skip}&limit=${postsPerPage}`);
+
+            if (!response.ok) {
+                throw new Error('Failed to load posts');
+            }
+
+            const data = await response.json();
+            const postsGrid = document.getElementById('posts-grid');
+
+            if (data.posts.length === 0 && currentPage === 0) {
+                document.getElementById('no-posts').style.display = 'block';
+                document.getElementById('posts-grid').style.display = 'none';
+            } else {
+                document.getElementById('no-posts').style.display = 'none';
+                document.getElementById('posts-grid').style.display = 'grid';
+
+                data.posts.forEach(post => {
+                    const postCard = createPostCard(post);
+                    postsGrid.appendChild(postCard);
+                });
+
+                hasMore = data.has_more;
+                currentPage++;
+            }
+
+        } catch (error) {
+            console.error('Error loading posts:', error);
+            notificationService.showToast('Failed to load posts', 'error');
+        } finally {
+            loadingIndicator.style.display = 'none';
+            isLoading = false;
+        }
+    }
+
+    // Create post card element
+    function createPostCard(post) {
+        const card = document.createElement('div');
+        card.className = 'post-card';
+        card.onclick = () => window.location.href = `/posts/${post.id}`;
+
+        const imageUrl = post.image_url || 'https://via.placeholder.com/400x400?text=No+Image';
+
+        card.innerHTML = `
+            <div class="post-image-container">
+                <img src="${imageUrl}" alt="${post.title}" class="post-image" loading="lazy">
+                <div class="post-overlay">
+                    <div class="post-title">${post.title}</div>
+                    <div class="post-stats">
+                        <div class="post-stat">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+                            </svg>
+                            ${post.like_count || 0}
+                        </div>
+                        <div class="post-stat">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                            </svg>
+                            ${post.comment_count || 0}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        return card;
+    }
+
+    // Infinite scroll
+    function handleScroll() {
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const threshold = document.documentElement.scrollHeight - 500;
+
+        if (scrollPosition >= threshold && hasMore && !isLoading) {
+            loadPosts();
+        }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadUserProfile();
+        await loadPosts(true);
+        
+        // Add scroll listener for infinite scroll
+        window.addEventListener('scroll', handleScroll);
+    });
+</script>
+{% endblock %}

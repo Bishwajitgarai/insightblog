@@ -50,6 +50,12 @@ async def reset_database():
     print("\n" + "=" * 60)
     print("✨ Database schema reset complete!")
     print("=" * 60)
+    #Remove all files from upload folder
+    import os
+    import shutil
+    shutil.rmtree("static/uploads")
+    os.mkdir("static/uploads")
+    print("\n🗑️  All files removed from upload folder!")
 
 if __name__ == "__main__":
     asyncio.run(reset_database())

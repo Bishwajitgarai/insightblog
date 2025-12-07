@@ -93,9 +93,9 @@
         document.getElementById('error-message').style.display = 'none';
         
         try {
-            const success = await authService.register(fullName, email, password);
+            const response = await authService.register(email, fullName, password);
             
-            if (success) {
+            if (response.success) {
                 // Show success message
                 notificationService.showToast('Account created successfully!', 'success');
                 
@@ -104,7 +104,7 @@
                     window.location.href = '/dashboard';
                 }, 500);
             } else {
-                throw new Error('Registration failed');
+                throw new Error(response.error || 'Registration failed');
             }
         } catch (error) {
             // Show error message

@@ -95,16 +95,26 @@
     }
 
     function renderProfile(user) {
-        document.getElementById('profile-name').textContent = user.full_name;
+        // Link name to public profile
+        const profileName = document.getElementById('profile-name');
+        profileName.innerHTML = `<a href="/user/${user.id}" style="text-decoration: none; color: inherit; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='inherit'">${user.full_name}</a>`;
+        
         document.getElementById('profile-email').textContent = user.email;
         document.getElementById('full_name').value = user.full_name || '';
         document.getElementById('bio').value = user.bio || '';
         
+        const profileImage = document.getElementById('profileImage');
         if (user.profile_image_url) {
-            document.getElementById('profileImage').src = user.profile_image_url;
+            profileImage.src = user.profile_image_url;
         } else {
-            document.getElementById('profileImage').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=6366f1&color=fff&size=120`;
+            profileImage.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=6366f1&color=fff&size=120`;
         }
+
+        // Make avatar clickable
+        const profileImageContainer = profileImage.parentElement;
+        profileImageContainer.style.cursor = 'pointer';
+        profileImageContainer.onclick = () => window.location.href = `/user/${user.id}`;
+        profileImageContainer.title = "View Public Profile";
     }
 
     function toggleChangePasswordModal() {

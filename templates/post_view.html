@@ -117,14 +117,20 @@
     }
 
     function renderPost(post) {
-        // API returns: author_name, not user_name or nested user object
+        // API returns: author_name, author_username, author_email
         const title = post.title || 'Untitled Post';
         const authorName = post.author_name || 'Unknown Author';
+        const authorUsername = post.author_username || 'unknown';
         const summary = post.summary || '';
         const createdAt = post.created_at || new Date().toISOString();
         
         document.getElementById('post-title').textContent = title;
-        document.getElementById('post-author').textContent = `By ${authorName}`;
+        
+        // Create clickable author link
+        const authorElement = document.getElementById('post-author');
+        const authorId = post.author_id;
+        authorElement.innerHTML = `By <a href="/user/${authorId}" style="color: var(--primary); text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='var(--secondary)'" onmouseout="this.style.color='var(--primary)'">@${authorUsername}</a>`;
+        
         document.getElementById('post-date').textContent = new Date(createdAt).toLocaleDateString('en-US', { 
             year: 'numeric', month: 'long', day: 'numeric' 
         });
@@ -220,8 +226,9 @@
         commentsList.innerHTML = '';
         
         comments.forEach(comment => {
-            // API returns: author_name, not user_name
+            // API returns: author_name, author_username
             const userName = comment.author_name || 'Anonymous';
+            const userUsername = comment.author_username || 'unknown';
             const content = comment.content || '';
             const createdAt = comment.created_at || new Date().toISOString();
             
@@ -234,7 +241,10 @@
                         <div style="flex: 1;">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <p class="font-semibold">${userName}</p>
+                                    <p class="font-semibold">
+                                        <a href="/user/${comment.author_id}" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-primary)'">${userName}</a>
+                                        <span style="color: var(--text-muted); font-weight: normal; font-size: 0.875rem; margin-left: 0.5rem;">@${userUsername}</span>
+                                    </p>
                                     <p class="text-sm text-muted">${new Date(createdAt).toLocaleString()}</p>
                                 </div>
                             </div>
@@ -251,15 +261,19 @@
     function renderReplies(replies) {
         let html = '<div style="margin-left: 2rem; margin-top: 1rem; padding-left: 1rem; border-left: 2px solid var(--border-color);">';
         replies.forEach(reply => {
-            // API returns: author_name, not user_name
+            // API returns: author_name, author_username
             const userName = reply.author_name || 'Anonymous';
+            const userUsername = reply.author_username || 'unknown';
             const content = reply.content || '';
             const createdAt = reply.created_at || new Date().toISOString();
             
             html += `
                 <div style="margin-bottom: 1rem;">
                     <div class="flex gap-sm items-center">
-                        <p class="font-semibold text-sm">${userName}</p>
+                        <p class="font-semibold text-sm">
+                            <a href="/user/${reply.author_id}" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-primary)'">${userName}</a>
+                            <span style="color: var(--text-muted); font-weight: normal; margin-left: 0.25rem;">@${userUsername}</span>
+                        </p>
                         <p class="text-xs text-muted">${new Date(createdAt).toLocaleString()}</p>
                     </div>
                     <p class="text-sm" style="margin-top: 0.25rem;">${content}</p>

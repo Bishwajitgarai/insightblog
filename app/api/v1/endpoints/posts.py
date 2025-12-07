@@ -11,6 +11,7 @@ from app.models.blog import Post, Category, Tag, PostCategory, PostTag, PostComm
 from app.models.user import User
 from app.api.v1.endpoints.users import get_current_user
 from app.services.redis_service import broadcaster
+from app.utils.upload_helper import get_user_post_upload_path
 
 router = APIRouter()
 
@@ -126,7 +127,9 @@ async def get_post(
                 "content": reply.content,
                 "created_at": reply.created_at.isoformat(),
                 "user_id": reply.user_id,
-                "author_name": reply_author.full_name if reply_author else "Unknown"
+                "author_id": reply.user_id,
+                "author_name": reply_author.full_name if reply_author else "Unknown",
+                "author_username": reply_author.email.split("@")[0] if reply_author and reply_author.email else "unknown"
             })
         
         comments.append({
@@ -134,7 +137,9 @@ async def get_post(
             "content": comment.content,
             "created_at": comment.created_at.isoformat(),
             "user_id": comment.user_id,
+            "author_id": comment.user_id,
             "author_name": comment_author.full_name if comment_author else "Unknown",
+            "author_username": comment_author.email.split("@")[0] if comment_author and comment_author.email else "unknown",
             "replies": replies
         })
     
@@ -152,6 +157,8 @@ async def get_post(
         "image_url": post.image_url,
         "author_id": post.author_id,
         "author_name": author.full_name if author else "Unknown",
+        "author_email": author.email if author else None,
+        "author_username": author.email.split("@")[0] if author and author.email else "unknown",
         "published": post.published,
         "created_at": post.created_at.isoformat(),
         "published_at": post.published_at.isoformat() if post.published_at else None,
@@ -174,23 +181,12 @@ async def create_post(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    image_url = None
-    if image and image.filename:
-        file_extension = os.path.splitext(image.filename)[1]
-        unique_filename = f"{uuid.uuid4()}{file_extension}"
-        file_path = os.path.join("static", "uploads", unique_filename)
-        
-        with open(file_path, "wb") as f:
-            content = await image.read()
-            f.write(content)
-        
-        image_url = f"/static/uploads/{unique_filename}"
-    
+    # Create post first without image
     new_post = Post(
         author_id=current_user.id,
         title=title,
         summary=summary,
-        image_url=image_url,
+        image_url=None,  # Will update after we have post_id
         published=True,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
@@ -200,6 +196,30 @@ async def create_post(
     session.add(new_post)
     await session.commit()
     await session.refresh(new_post)
+    
+    # Now handle image upload with post_id
+    image_url = None
+    if image and image.filename:
+        file_extension = os.path.splitext(image.filename)[1]
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        
+        # Use structured upload path
+        file_path, url_path = get_user_post_upload_path(
+            current_user.id, 
+            new_post.id, 
+            unique_filename
+        )
+        
+        with open(file_path, "wb") as f:
+            content = await image.read()
+            f.write(content)
+        
+        image_url = url_path
+        
+        # Update post with image URL
+        new_post.image_url = image_url
+        session.add(new_post)
+        await session.commit()
     
     # Handle category
     cat_slug = category.lower().replace(" ", "-")

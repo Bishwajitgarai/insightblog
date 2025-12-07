@@ -154,13 +154,3 @@ class AuthService {
 
 // Create global auth service instance
 const authService = new AuthService();
-
-// Helper function for toast notifications
-function showToast(message, type = 'info') {
-    // Simple alert for now, can be replaced with a toast library
-    if (type === 'error') {
-        alert('Error: ' + message);
-    } else {
-        alert(message);
-    }
-}

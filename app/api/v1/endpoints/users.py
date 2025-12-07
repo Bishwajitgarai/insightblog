@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from typing import Annotated
 import shutil
 import os
@@ -15,6 +15,7 @@ from app.services.otp import create_otp, verify_otp
 from app.core.config import get_settings
 from jose import JWTError, jwt
 from pydantic import BaseModel
+from app.utils.upload_helper import get_user_profile_upload_path
 
 router = APIRouter()
 settings = get_settings()
@@ -184,15 +185,123 @@ async def upload_avatar(
     session: AsyncSession = Depends(get_session),
     file: UploadFile = File(...)
 ):
-    upload_dir = Path("static/uploads")
-    upload_dir.mkdir(parents=True, exist_ok=True)
+    # Use structured upload path
+    file_extension = os.path.splitext(file.filename)[1]
+    unique_filename = f"avatar{file_extension}"
     
-    file_path = upload_dir / f"{current_user.id}_{file.filename}"
-    with file_path.open("wb") as buffer:
+    file_path, url_path = get_user_profile_upload_path(current_user.id, unique_filename)
+    
+    with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
-    current_user.profile_image_url = f"/static/uploads/{file_path.name}"
+    current_user.profile_image_url = url_path
     session.add(current_user)
     await session.commit()
     await session.refresh(current_user)
     return current_user
+
+@router.get("/profile/{user_id}")
+async def get_user_profile_by_id(
+    user_id: int,
+    session: AsyncSession = Depends(get_session)
+):
+    """Get user profile by user ID"""
+    # Find user by ID
+    result = await session.execute(
+        select(User).where(User.id == user_id)
+    )
+    user = result.scalars().first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Count user's posts
+    from app.models.blog import Post
+    count_result = await session.execute(
+        select(func.count()).select_from(Post).where(
+            Post.author_id == user.id,
+            Post.published == True
+        )
+    )
+    post_count = count_result.scalar()
+    
+    return {
+        "id": user.id,
+        "username": user.email.split("@")[0],
+        "email": user.email,
+        "full_name": user.full_name,
+        "bio": user.bio,
+        "profile_image_url": user.profile_image_url,
+        "role": user.role,
+
+        "post_count": post_count
+    }
+
+@router.get("/profile/{user_id}/posts")
+async def get_user_posts_by_id(
+    user_id: int,
+    skip: int = 0,
+    limit: int = 12,
+    session: AsyncSession = Depends(get_session)
+):
+    """Get user's posts by user ID with pagination (for profile feed)"""
+    # Find user by ID
+    user_result = await session.execute(
+        select(User).where(User.id == user_id)
+    )
+    user = user_result.scalars().first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    from app.models.blog import Post
+    
+    # Get total count
+    count_result = await session.execute(
+        select(func.count()).select_from(Post).where(
+            Post.author_id == user.id,
+            Post.published == True
+        )
+    )
+    total = count_result.scalar()
+    
+    # Get posts with pagination
+    query = select(Post).where(
+        Post.author_id == user.id,
+        Post.published == True
+    ).order_by(Post.published_at.desc()).offset(skip).limit(limit)
+    
+    result = await session.execute(query)
+    posts = result.scalars().all()
+    
+    posts_data = []
+    for post in posts:
+        # Get like count
+        from app.models.blog import PostLike, PostComment
+        like_query = select(func.count()).select_from(PostLike).where(PostLike.post_id == post.id)
+        like_result = await session.execute(like_query)
+        like_count = like_result.scalar()
+        
+        # Get comment count
+        comment_query = select(func.count()).select_from(PostComment).where(PostComment.post_id == post.id)
+        comment_result = await session.execute(comment_query)
+        comment_count = comment_result.scalar()
+        
+        posts_data.append({
+            "id": post.id,
+            "title": post.title,
+            "summary": post.summary,
+            "image_url": post.image_url,
+            "published_at": post.published_at.isoformat() if post.published_at else None,
+            "like_count": like_count,
+            "comment_count": comment_count
+        })
+    
+    return {
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "has_more": (skip + limit) < total,
+        "posts": posts_data
+    }
+

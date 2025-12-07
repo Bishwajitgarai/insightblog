@@ -79,9 +79,9 @@
         document.getElementById('error-message').style.display = 'none';
         
         try {
-            const success = await authService.login(email, password);
+            const response = await authService.login(email, password);
             
-            if (success) {
+            if (response.success) {
                 // Show success message
                 notificationService.showToast('Welcome back!', 'success');
                 
@@ -90,7 +90,7 @@
                     window.location.href = '/dashboard';
                 }, 500);
             } else {
-                throw new Error('Login failed');
+                throw new Error(response.error || 'Login failed');
             }
         } catch (error) {
             // Show error message

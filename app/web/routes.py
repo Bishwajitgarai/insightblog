@@ -28,6 +28,11 @@ async def dashboard_page(request: Request):
 async def profile_page(request: Request):
     return templates.TemplateResponse("profile.html", {"request": request})
 
+@router.get("/user/{user_id}", response_class=HTMLResponse)
+async def user_profile_page(request: Request, user_id: int):
+    """View another user's profile by user ID"""
+    return templates.TemplateResponse("user_profile.html", {"request": request, "user_id": user_id})
+
 @router.get("/posts/create", response_class=HTMLResponse)
 async def create_post_page(request: Request):
     return templates.TemplateResponse("create_post.html", {"request": request})
@@ -43,3 +48,8 @@ async def notifications_page(request: Request):
 @router.get("/forgot-password", response_class=HTMLResponse)
 async def forgot_password_page(request: Request):
     return templates.TemplateResponse("forgot_password.html", {"request": request})
+
+@router.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_page(request: Request):
+    return templates.TemplateResponse("reset_password.html", {"request": request})
+
