@@ -14,7 +14,7 @@ from sqlalchemy import text
 from app.core.config import get_settings
 # Import all models to ensure they're registered with SQLAlchemy
 from app.models.user import User
-from app.models.blog import Post, Category, Tag, PostCategory, PostTag, PostComment
+from app.models.blog import Post, Category, Tag, PostCategory, PostTag, PostComment, PostLike, PostShare, Notification
 
 async def reset_database():
     """Drop all tables and recreate them."""

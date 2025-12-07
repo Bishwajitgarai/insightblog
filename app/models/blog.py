@@ -41,16 +41,33 @@ class Post(SQLModel, table=True):
     categories: List[Category] = Relationship(back_populates="posts", link_model=PostCategory)
     tags: List[Tag] = Relationship(back_populates="posts", link_model=PostTag)
     comments: List["PostComment"] = Relationship(back_populates="post", sa_relationship_kwargs={"cascade": "all, delete"})
+    likes: List["PostLike"] = Relationship(back_populates="post", sa_relationship_kwargs={"cascade": "all, delete"})
+    shares: List["PostShare"] = Relationship(back_populates="post", sa_relationship_kwargs={"cascade": "all, delete"})
+
+class PostLike(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    post_id: int = Field(foreign_key="post.id")
+    user_id: int = Field(foreign_key="user.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    post: Post = Relationship(back_populates="likes")
+
+class PostShare(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    post_id: int = Field(foreign_key="post.id")
+    user_id: int = Field(foreign_key="user.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    post: Post = Relationship(back_populates="shares")
 
 class PostComment(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     post_id: int = Field(foreign_key="post.id")
+    user_id: int = Field(foreign_key="user.id")
     parent_id: Optional[int] = Field(default=None, foreign_key="postcomment.id")
-    title: Optional[str] = Field(default=None, max_length=100)
-    published: bool = Field(default=True)
+    content: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    published_at: Optional[datetime] = None # Defaults to created_at if published
-    content: Optional[str] = None
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     post: Post = Relationship(back_populates="comments")
     children: List["PostComment"] = Relationship(
@@ -59,3 +76,14 @@ class PostComment(SQLModel, table=True):
             "remote_side": "PostComment.id"
         }
     )
+
+class Notification(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")  # Recipient (usually admin)
+    actor_id: Optional[int] = Field(default=None, foreign_key="user.id")  # Who triggered it
+    type: str = Field(max_length=50)  # 'like', 'comment', 'share', 'mention'
+    content: str  # Notification message
+    post_id: Optional[int] = Field(default=None, foreign_key="post.id")
+    comment_id: Optional[int] = Field(default=None, foreign_key="postcomment.id")
+    read: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)

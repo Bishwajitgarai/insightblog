@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, Form, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Request, Depends, Form, HTTPException, status, UploadFile, File, Body
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +7,7 @@ from typing import Optional
 
 from app.db.session import get_session
 from app.models.user import User
-from app.models.blog import Post, Category, Tag, PostCategory, PostTag
+from app.models.blog import Post, Category, Tag, PostCategory, PostTag, PostComment, PostLike, PostShare, Notification
 from app.services.auth import get_password_hash, verify_password, create_access_token
 from app.core.config import get_settings
 from jose import jwt, JWTError
@@ -87,16 +87,28 @@ async def dashboard(request: Request, user: Optional[User] = Depends(get_current
     result = await session.execute(query)
     posts = result.scalars().all()
     
-    # Format posts for template
+    # Format posts for template with counts
     feed = []
     for post in posts:
+        # Get like count
+        like_query = select(PostLike).where(PostLike.post_id == post.id)
+        like_result = await session.execute(like_query)
+        like_count = len(like_result.scalars().all())
+        
+        # Get comment count
+        comment_query = select(PostComment).where(PostComment.post_id == post.id)
+        comment_result = await session.execute(comment_query)
+        comment_count = len(comment_result.scalars().all())
+        
         feed.append({
             "id": post.id,
             "title": post.title,
             "body": post.summary or "No summary available",
             "image_url": post.image_url,
             "created_at": post.created_at,
-            "author_id": post.author_id
+            "author_id": post.author_id,
+            "like_count": like_count,
+            "comment_count": comment_count
         })
     
     return templates.TemplateResponse("dashboard.html", {"request": request, "user": user, "feed": feed})
